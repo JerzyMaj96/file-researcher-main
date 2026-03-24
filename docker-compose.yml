@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: fr_db
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-fileresearcher}
+      MYSQL_USER: ${DB_USER:-admin}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: fr_mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    restart: unless-stopped
+
+  backend:
+    image: jerzymaj96/file-researcher-backend:latest
+    container_name: fr_backend
+    environment:
+      SPRING_PROFILES_ACTIVE: dev-docker
+      DOCKER_DB_USERNAME: ${DB_USER:-admin}
+      DOCKER_DB_PASSWORD: ${DB_PASSWORD}
+      ALLOWED_ORIGIN: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  frontend:
+    image: jerzymaj96/file-researcher-frontend:latest
+    container_name: fr_frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
+volumes:
+  db_data:
