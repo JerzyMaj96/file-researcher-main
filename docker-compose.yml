@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: jerzyk437/file-researcher-backend:latest
+    image: jerzyk437/file-researcher-backend:v1.5
     container_name: fr_backend
     environment:
       SPRING_PROFILES_ACTIVE: dev-docker
